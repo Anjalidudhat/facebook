@@ -179,7 +179,9 @@
 
 
 streamlit
+streamlit-option-menu
 pandas
 numpy
 scikit-learn
 matplotlib
+
