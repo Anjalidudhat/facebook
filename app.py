@@ -112,25 +112,67 @@ if selected == "Prediction":
 
 
 
-import pandas as pd
-import matplotlib.pyplot as plt
+
+# if user click predit button
+
+if st.button("Predict Performance"):
+    # Convert categories to numerical
+    month_num = {
+        "Januar": 1, "Februar": 2, "Marz": 3, "April": 4,
+        "Mai": 5, "Juni": 6, "Juli": 7, "August": 8,
+        "September": 9, "Oktober": 10, "November": 11, "Dezember": 12
+    }[month]
+
+    weekday_num = {
+        "Montag": 0, "Dienstag": 1, "Mittwoch": 2, "Donnerstag": 3,
+        "Freitag": 4, "Samstag": 5, "Sonntag": 6
+    }[weekday]
+
+    type_dict = {"Photo": 1, "Status": 2, "Link": 3, "Video": 4}
+    category_dict = {"Inspiration": 1, "Product": 2, "Promotion": 3}
+
+    input_data = np.array([[category_dict[category], month_num, weekday_num,
+                            int(hour.split(":")[0]), paid, type_dict[type_post],
+                            reach, impressions, engaged_users, consumers,
+                            consumptions, imp_liked, reach_liked,
+                            engaged_liked, comments, likes, shares]])
+
+    prediction = model.predict(input_data)[0]
+    result_map = {0: "Low", 1: "Medium", 2: "High"}
+
+    # 🚀 Save the prediction and input_data in session_state
+    st.session_state.input_data = input_data
+    st.session_state.prediction = prediction
+
+    st.success(f"🎯 **Predicted Interaction Level: {result_map[prediction]}**")
+
+    colA, colB, colC = st.columns(3)
+    with colA:
+        st.metric(label="TOTAL INTERACTIONS", value="890")
+    with colB:
+        st.metric(label="EXPECTED REACH", value="80,127")
+    with colC:
+        st.metric(label="ENGAGED USERS", value="19,023")
+
+
+
+
+# is user click insights button 
 
 if selected == "Insights":
     st.markdown("### 📊 Interaction Insights")
 
-    try:
-        # Reuse the last input if you have one, otherwise, simulate or require a new one
-        if 'input_data' in locals():
-            proba = model.predict_proba(input_data)[0]
-            levels = ["Low", "Medium", "High"]
-            df = pd.DataFrame({'Interaction Level': levels, 'Probability': proba})
+    if 'input_data' in st.session_state and 'prediction' in st.session_state:
+        input_data = st.session_state.input_data
+        prediction = st.session_state.prediction
 
-            st.bar_chart(df.set_index("Interaction Level"))
+        proba = model.predict_proba(input_data)[0]
+        levels = ["Low", "Medium", "High"]
+        df = pd.DataFrame({'Interaction Level': levels, 'Probability': proba})
 
-            st.write("This chart shows the likelihood of each interaction level based on the post features you selected.")
+        st.bar_chart(df.set_index("Interaction Level"))
+        st.write("This chart shows the likelihood of each interaction level based on the post features you selected.")
 
-        else:
-            st.warning("Please run a prediction first in the 'Prediction' tab to view insights.")
-    except Exception as e:
-        st.error(f"Error showing insights: {e}")
+    else:
+        st.warning("⚠️ Please run a prediction first in the 'Prediction' tab to view insights.")
 
