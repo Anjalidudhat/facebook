@@ -108,3 +108,29 @@ if selected == "Prediction":
             st.metric(label="EXPECTED REACH", value="80,127")
         with colC:
             st.metric(label="ENGAGED USERS", value="19,023")
+
+
+
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+if selected == "Insights":
+    st.markdown("### 📊 Interaction Insights")
+
+    try:
+        # Reuse the last input if you have one, otherwise, simulate or require a new one
+        if 'input_data' in locals():
+            proba = model.predict_proba(input_data)[0]
+            levels = ["Low", "Medium", "High"]
+            df = pd.DataFrame({'Interaction Level': levels, 'Probability': proba})
+
+            st.bar_chart(df.set_index("Interaction Level"))
+
+            st.write("This chart shows the likelihood of each interaction level based on the post features you selected.")
+
+        else:
+            st.warning("Please run a prediction first in the 'Prediction' tab to view insights.")
+    except Exception as e:
+        st.error(f"Error showing insights: {e}")
+
