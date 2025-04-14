@@ -1,10 +1,10 @@
 
 
 
-
 import streamlit as st
 import pickle
 import numpy as np
+import matplotlib.pyplot as plt
 from streamlit_option_menu import option_menu
 
 # ====== PAGE CONFIG ======
@@ -42,6 +42,7 @@ selected = option_menu(
     default_index=0,
 )
 
+
 if selected == "Prediction":
     st.markdown("### POST DETAILS")
 
@@ -73,6 +74,7 @@ if selected == "Prediction":
         likes = st.number_input("Likes", value=50)
         shares = st.number_input("Shares", value=5)
 
+    # Move the prediction button INSIDE the Prediction block
     if st.button("Predict Performance"):
         # Convert categories to numerical
         month_num = {
@@ -98,17 +100,97 @@ if selected == "Prediction":
         prediction = model.predict(input_data)[0]
         result_map = {0: "Low", 1: "Medium", 2: "High"}
 
+        # Store the prediction in session state
+        st.session_state.prediction = prediction
+
         st.success(f"🎯 **Predicted Interaction Level: {result_map[prediction]}**")
 
-        # Simulated numbers just for nice UI
-        colA, colB, colC = st.columns(3)
-        with colA:
-            st.metric(label="TOTAL INTERACTIONS", value="890")
-        with colB:
-            st.metric(label="EXPECTED REACH", value="80,127")
-        with colC:
-            st.metric(label="ENGAGED USERS", value="19,023")
+    
 
+# ====== INSIGHTS PAGE ======
+elif selected == "Insights":
+    st.markdown("### 📊 Insights Based on Prediction")
 
+    # Check if prediction exists in session state
+    if "prediction" not in st.session_state:
+        st.warning("Please make a prediction first on the Prediction tab.")
+        st.stop()  # This stops execution of the rest of the code in this tab
 
+    pred = st.session_state.prediction
+    result_map = {0: "Low", 1: "Medium", 2: "High"}
+    
+    st.success(f"Currently showing insights for: {result_map[pred]} performance")
 
+    # Dynamic visualization based on prediction value
+    if pred == 0:  # Low performance
+        values = [800, 40, 3, 1]  # Reach, Engagements, Comments, Shares
+        color = '#ff7f7f'  # Light red
+        tips = [
+            "Try posting during evenings (6-9 PM)",
+            "Use more emotional or inspirational content",
+            "Include clear call-to-actions"
+        ]
+    elif pred == 1:  # Medium performance
+        values = [5000, 150, 15, 10]
+        color = '#7fb8ff'  # Light blue
+        tips = [
+            "Experiment with different content formats",
+            "Analyze your top-performing posts for patterns",
+            "Consider boosting high-potential posts"
+        ]
+    else:  # High performance
+        values = [20000, 1000, 80, 50]
+        color = '#7fff7f'  # Light green
+        tips = [
+            "Double down on what's working",
+            "Create similar content with variations",
+            "Consider creating a content series"
+        ]
+
+    # Metrics visualization
+    st.markdown("### Performance Metrics")
+    metrics = ["Reach", "Engagements", "Comments", "Shares"]
+    
+    fig, ax = plt.subplots(figsize=(10, 5))
+    bars = ax.bar(metrics, values, color=color)
+    ax.set_title(f"{result_map[pred]} Performance Metrics")
+    ax.set_ylabel("Count")
+    
+    # Add value labels on top of bars
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{int(height)}',
+                ha='center', va='bottom')
+    
+    st.pyplot(fig)
+
+    # Improvement tips section
+    st.markdown("### Improvement Tips")
+    for i, tip in enumerate(tips, 1):
+        st.write(f"{i}. {tip}")
+
+    # Comparison with other levels
+    st.markdown("### How You Compare")
+    all_values = {
+        "Low": [800, 40, 3, 1],
+        "Medium": [5000, 150, 15, 10],
+        "High": [20000, 1000, 80, 50]
+    }
+    
+    fig2, ax2 = plt.subplots(figsize=(10, 5))
+    width = 0.25
+    x = np.arange(len(metrics))
+    
+    for i, (level, vals) in enumerate(all_values.items()):
+        offset = width * i
+        ax2.bar(x + offset, vals, width, label=level,
+               color='#ff7f7f' if level == "Low" else '#7fb8ff' if level == "Medium" else '#7fff7f')
+    
+    ax2.set_xticks(x + width)
+    ax2.set_xticklabels(metrics)
+    ax2.legend(title="Performance Level")
+    ax2.set_title("Comparison with All Performance Levels")
+    ax2.set_ylabel("Count")
+    
+    st.pyplot(fig2)
